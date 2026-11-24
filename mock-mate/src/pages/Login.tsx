@@ -3,6 +3,8 @@ import { useState } from "react"
 import type { FormEvent } from "react"
 import { TRACKS } from "../data/constants"
 import supabase from "../lib/supabaseClient"
+import { useNavigate } from "react-router"
+import { friendlyAuthError } from "../lib/authErrors"
 
 type AuthMode = "signup" | "signin"
 
@@ -18,6 +20,7 @@ type FieldErrors = Partial<Record<keyof SignupForm, string>>
 
 function Login() {
   const [mode, setMode] = useState<AuthMode>("signin")
+  const navigate = useNavigate()
 
   const [signup, setSignup] = useState<SignupForm>({
     name: "",
@@ -103,66 +106,64 @@ function Login() {
 
       if (profileError) throw profileError
 
-      setSuccess(
-        "Account created successfully! You can now use MockMate."
-      )
+      setSuccess("Account created successfully.")
+      navigate("/dashboard")
     } catch (err) {
       console.error("Signup error:", err)
 
-      const message =
-        err instanceof Error ? err.message : "Signup failed."
-
+     
       setError(
-        message.toLowerCase().includes("already registered")
-          ? "That email already has an account - try signing in instead."
-          : message
-      )
+      friendlyAuthError(
+      err instanceof Error ? err.message : "Sign up failed."
+  )
+)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  async function handleSignIn(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-    setFieldErrors({})
+ 
+async function handleSignIn(e: FormEvent) {
+  e.preventDefault()
+  setError(null)
 
-    const email = signup.email.trim().toLowerCase()
+  // Validate before contacting Supabase
+  const email = signup.email.trim().toLowerCase()
+  const password = signup.password
 
-    if (!email.includes("@") || !email.split("@")[1]?.includes(".")) {
-      setFieldErrors({ email: "Please enter a valid email address." })
-      return
-    }
+  if (!email || !email.includes("@") || !email.includes(".")) {
+    setError("Please enter a valid email address.")
+    return
+  }
 
-    if (!signup.password) {
-      setFieldErrors({ password: "Please enter your password." })
-      return
-    }
+  if (!password.trim()) {
+    setError("Please enter your password.")
+    return
+  }
 
-    setIsSubmitting(true)
+  setIsSubmitting(true)
 
-    try {
-      const { error: authError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password: signup.password,
-        })
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-      if (authError) throw authError
+    if (error) throw error
 
-      setSuccess("Signed in successfully!")
-    } catch (err) {
-      console.error("Sign-in error:", err)
-
-      const message =
+    setSuccess("Signed in successfully.")
+    navigate("/dashboard")
+  } catch (err) {
+    setError(
+      friendlyAuthError(
         err instanceof Error ? err.message : "Sign in failed."
-
-      setError(message)
-    } finally {
-      setIsSubmitting(false)
-    }
+      )
+    )
+  } finally {
+    setIsSubmitting(false)
   }
+}
+
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode)
