@@ -111,59 +111,57 @@ function Login() {
     } catch (err) {
       console.error("Signup error:", err)
 
-     
       setError(
-      friendlyAuthError(
-      err instanceof Error ? err.message : "Sign up failed."
-  )
-)
+        friendlyAuthError(
+          err instanceof Error ? err.message : "Sign up failed."
+        )
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
 
- 
-async function handleSignIn(e: FormEvent) {
-  e.preventDefault()
-  setError(null)
+  async function handleSignIn(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
 
-  // Validate before contacting Supabase
-  const email = signup.email.trim().toLowerCase()
-  const password = signup.password
+    // Validate before contacting Supabase
+    const email = signup.email.trim().toLowerCase()
+    const password = signup.password
 
-  if (!email || !email.includes("@") || !email.includes(".")) {
-    setError("Please enter a valid email address.")
-    return
-  }
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      setError("Please enter a valid email address.")
+      return
+    }
 
-  if (!password.trim()) {
-    setError("Please enter your password.")
-    return
-  }
+    if (!password.trim()) {
+      setError("Please enter your password.")
+      return
+    }
 
-  setIsSubmitting(true)
+    setIsSubmitting(true)
 
-  try {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) throw error
+      if (error) throw error
 
-    setSuccess("Signed in successfully.")
-    navigate("/dashboard")
-  } catch (err) {
-    setError(
-      friendlyAuthError(
-        err instanceof Error ? err.message : "Sign in failed."
+      setSuccess("Signed in successfully.")
+      navigate("/dashboard")
+    } catch (err) {
+      setError(
+        friendlyAuthError(
+          err instanceof Error ? err.message : "Sign in failed."
+        )
       )
-    )
-  } finally {
-    setIsSubmitting(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
-}
-
 
   function changeMode(nextMode: AuthMode) {
     setMode(nextMode)
