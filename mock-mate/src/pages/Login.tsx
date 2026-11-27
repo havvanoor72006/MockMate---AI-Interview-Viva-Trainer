@@ -3,7 +3,7 @@ import { useState } from "react"
 import type { FormEvent } from "react"
 import { TRACKS } from "../data/constants"
 import supabase from "../lib/supabaseClient"
-import { useNavigate } from "react-router"
+import { useLocation, useNavigate } from "react-router"
 import { friendlyAuthError } from "../lib/authErrors"
 
 type AuthMode = "signup" | "signin"
@@ -21,6 +21,11 @@ type FieldErrors = Partial<Record<keyof SignupForm, string>>
 function Login() {
   const [mode, setMode] = useState<AuthMode>("signin")
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const from = (
+    location.state as { from?: { pathname: string } } | null
+  )?.from?.pathname
 
   const [signup, setSignup] = useState<SignupForm>({
     name: "",
@@ -107,7 +112,7 @@ function Login() {
       if (profileError) throw profileError
 
       setSuccess("Account created successfully.")
-      navigate("/dashboard")
+      navigate(from ?? "/dashboard")
     } catch (err) {
       console.error("Signup error:", err)
 
@@ -151,7 +156,7 @@ function Login() {
       if (error) throw error
 
       setSuccess("Signed in successfully.")
-      navigate("/dashboard")
+      navigate(from ?? "/dashboard")
     } catch (err) {
       setError(
         friendlyAuthError(
@@ -232,6 +237,7 @@ function Login() {
                     }
                     placeholder="Enter your full name"
                     className={inputClass}
+                    disabled={isSubmitting}
                   />
                   {fieldErrors.name && (
                     <p className="mt-1 text-sm text-red-400">
@@ -250,6 +256,7 @@ function Login() {
                       updateField("targetRole", e.target.value)
                     }
                     className={inputClass}
+                    disabled={isSubmitting}
                   >
                     {TRACKS.map((track) => (
                       <option key={track.label} value={track.label}>
@@ -271,6 +278,7 @@ function Login() {
                     }
                     placeholder="Enter your college name"
                     className={inputClass}
+                    disabled={isSubmitting}
                   />
                 </div>
               </>
@@ -288,6 +296,7 @@ function Login() {
                 }
                 placeholder="you@example.com"
                 className={inputClass}
+                disabled={isSubmitting}
               />
               {fieldErrors.email && (
                 <p className="mt-1 text-sm text-red-400">
@@ -312,6 +321,7 @@ function Login() {
                     : "Enter your password"
                 }
                 className={inputClass}
+                disabled={isSubmitting}
               />
               {fieldErrors.password && (
                 <p className="mt-1 text-sm text-red-400">
